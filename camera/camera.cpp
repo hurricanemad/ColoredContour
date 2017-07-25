@@ -93,7 +93,7 @@ void DrawCircle(const Mat src, Mat dst, Point center,int radius,int thickness)
 {   
 	Mat backgound;
 	backgound.create(dst.rows, dst.cols, dst.type());
-	circle(backgound, center, radius+100, Scalar(0,0,255), thickness,8);
+	circle(backgound, center, radius+100, Scalar(0,255,255), thickness,8);
 	circle(backgound, center, radius+50, Scalar(255, 0, 0), thickness, 8);
 	circle(backgound, center, radius, Scalar(0, 255, 0), thickness, 8);
 	backgound.copyTo(dst,src);
