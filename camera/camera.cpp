@@ -3,11 +3,23 @@
 
 #include "stdafx.h"
 void bold(const Mat &src, Mat & dst);
-void DrawCircle(const Mat src, Mat dst, Point center, int radius, int thickness);
+void DrawCircle(const Mat src, const Mat background, Mat dst, Point center, int radius);
 
 int main()
 {
 	VideoCapture capture(0);
+	Mat Backgound;
+	capture >> Backgound;
+	double diag = sqrt(capture.get(CAP_PROP_FRAME_WIDTH)*capture.get(CAP_PROP_FRAME_WIDTH) + capture.get(CAP_PROP_FRAME_HEIGHT)*capture.get(CAP_PROP_FRAME_HEIGHT)) / 2;
+	int add = diag / 255 + 1;
+	int radius = add;
+	for (int i = 0;radius<diag;)
+	{
+		if (i != 127)
+			i++;
+		circle(Backgound, Point(Backgound.cols / 2, Backgound.rows / 2), radius, Scalar(255, i * 2, 0), add, 8);
+		radius = radius + add;
+	}
 	int frameRad = 12;
 	//capture.set(CAP_PROP_FRAME_WIDTH, 1280);
 	//capture.set(CAP_PROP_FRAME_HEIGHT, 720);
@@ -26,8 +38,7 @@ int main()
 	
 		Mat frame,framegray,framemake,framenew, framemakewide;
 		Mat kernel = (Mat_<float>(3, 3) << 0, -1, 0, -1, 5, -1, 0, -1, 0);
-		//int min = 100;
-		//int max = 500;
+
 
 		vector<vector<Point>> frameContours;
 		vector<Vec4i> frameHierarchy;
@@ -49,7 +60,7 @@ int main()
 
 		if (frameRad > sqrt(framenew.cols*framenew.cols+ framenew.rows*framenew.rows)/2+4)
 			frameRad = 12;
-		DrawCircle(framemakewide, framenew, Point(framenew.cols / 2, framenew.rows / 2), frameRad, -1);
+		DrawCircle(framemakewide, Backgound, framenew, Point(framenew.cols / 2, framenew.rows / 2), frameRad);
 		frameRad = frameRad + 12;
 		dProcessTime = (static_cast<double>(getTickCount()) - dProcessTime) / getTickFrequency();
 
@@ -89,12 +100,15 @@ void bold(const Mat &src, Mat & dst)
 		}
 	}
 }
-void DrawCircle(const Mat src, Mat dst, Point center,int radius,int thickness)
+void DrawCircle(const Mat src, const Mat background, Mat dst, Point center,int radius)
 {   
-	Mat backgound;
-	backgound.create(dst.rows, dst.cols, dst.type());
-	circle(backgound, center, radius+100, Scalar(0,255,255), thickness,8);
-	circle(backgound, center, radius+50, Scalar(255, 0, 0), thickness, 8);
-	circle(backgound, center, radius, Scalar(0, 255, 0), thickness, 8);
-	backgound.copyTo(dst,src);
+	Mat backGround,drawbackGround;
+	backGround.create(dst.rows, dst.cols, dst.type());
+	drawbackGround.create(dst.rows, dst.cols, dst.type());
+	drawbackGround = Scalar::all(255);
+	backGround = Scalar::all(0);
+	cvtColor(backGround, backGround, CV_BGR2GRAY);
+	circle(backGround, center, radius, Scalar(255), -1, 8);
+	background.copyTo(drawbackGround, backGround);
+	drawbackGround.copyTo(dst,src);
 }  

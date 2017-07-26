@@ -1,3 +1,4 @@
 ﻿  camera.cpp
+f:\github\coloredcontour\camera\camera.cpp(14): warning C4244: “初始化”: 从“double”转换到“int”，可能丢失数据
   camera.vcxproj -> F:\GitHub\ColoredContour\x64\Debug\camera.exe
   camera.vcxproj -> F:\GitHub\ColoredContour\x64\Debug\camera.pdb (Full PDB)
