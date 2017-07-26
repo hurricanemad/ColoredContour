@@ -2,113 +2,93 @@
 //
 
 #include "stdafx.h"
-void bold(const Mat &src, Mat & dst);
-void DrawCircle(const Mat src, const Mat background, Mat dst, Point center, int radius);
-
+void DrawCircle(const Mat , const Mat , Mat , Point , int );
+void DrawBackGround(Mat);
 int main()
 {
-	VideoCapture capture(0);
-	Mat Backgound;
-	capture >> Backgound;
-	double diag = sqrt(capture.get(CAP_PROP_FRAME_WIDTH)*capture.get(CAP_PROP_FRAME_WIDTH) + capture.get(CAP_PROP_FRAME_HEIGHT)*capture.get(CAP_PROP_FRAME_HEIGHT)) / 2;
-	int add = diag / 255 + 1;
-	int radius = add;
-	for (int i = 0;radius<diag;)
-	{
-		if (i != 127)
-			i++;
-		circle(Backgound, Point(Backgound.cols / 2, Backgound.rows / 2), radius, Scalar(255, i * 2, 0), add, 8);
-		radius = radius + add;
-	}
-	int frameRad = 12;
-	//capture.set(CAP_PROP_FRAME_WIDTH, 1280);
-	//capture.set(CAP_PROP_FRAME_HEIGHT, 720);
-
-	if (!capture.isOpened())
+	VideoCapture capture(0); // 开启摄像头
+	capture.set(CAP_PROP_FRAME_WIDTH, 1280); // 设置摄像头参数、大小
+	capture.set(CAP_PROP_FRAME_HEIGHT, 720);
+	Mat Background;
+	int frameRad = 12; // 确定渐变圆初始半径
+	capture >> Background;
+	DrawBackGround(Background);
+	if (!capture.isOpened())        // 判断摄像头是否开启
 	{   
 		cout << "No Camera Input! " << endl;
 		exit(-1);
 	}
 
-	int nKey = '\0';
-
+    int nKey = '\0'; // 循环停止条件
 	while ('\r' != nKey)
 	{   
 		double dProcessTime = static_cast<double>(getTickCount());
 	
-		Mat frame,framegray,framemake,framenew, framemakewide;
-		Mat kernel = (Mat_<float>(3, 3) << 0, -1, 0, -1, 5, -1, 0, -1, 0);
+		Mat Frame; //摄像头采集的图像
+		Mat	FrameGray; // 灰度图像
+		Mat	FrameContour; // 边缘二值化图像
+		Mat	FrameNew;  // 原图与边缘图结合后得到的图像
 
-
-		vector<vector<Point>> frameContours;
-		vector<Vec4i> frameHierarchy;
-
-        capture >> frame;
+        capture >> Frame; // 采集一帧图像
 		
-		cvtColor(frame, framegray, COLOR_BGR2GRAY);
-		GaussianBlur(framegray, framegray, Size(7, 7), 1.3, 1.3);
+		cvtColor(Frame, FrameGray, COLOR_BGR2GRAY); // 转化为灰度图
 
-		Canny(framegray, framemake, 30,90, 3);
+		GaussianBlur(FrameGray, FrameGray, Size(7, 7), 1.3, 1.3); //高斯滤波去噪
 
-//		bold(framemake, framemakewide);
+		Canny(FrameGray, FrameContour, 30,90, 3); // Canney算法
 
-		cvtColor(framemake, framemakewide, CV_GRAY2BGR);
+		cvtColor(FrameContour, FrameContour, CV_GRAY2BGR); // 1通道转化为三通道以便结合
 
-		addWeighted(frame, 1.0, framemakewide, 1.0, 0.0, framenew);
+		addWeighted(Frame, 1.0, FrameContour, 1.0, 0.0, FrameNew); //边缘与原图融合
 
-	    filter2D(framenew, framenew, framenew.depth(), kernel);  //锐化处理
+		Mat kernel = (Mat_<float>(3, 3) << 0, -1, 0, -1, 5, -1, 0, -1, 0); // 锐化处理矩阵
+	    filter2D(FrameNew, FrameNew, FrameNew.depth(), kernel);  //锐化处理
 
-		if (frameRad > sqrt(framenew.cols*framenew.cols+ framenew.rows*framenew.rows)/2+4)
+		if (frameRad > sqrt(FrameNew.cols*FrameNew.cols+ FrameNew.rows*FrameNew.rows)/2+4) // 判断渐变图的圆半径
 			frameRad = 12;
-		DrawCircle(framemakewide, Backgound, framenew, Point(framenew.cols / 2, framenew.rows / 2), frameRad);
-		frameRad = frameRad + 12;
+		DrawCircle(FrameContour, Background, FrameNew, Point(FrameNew.cols / 2, FrameNew.rows / 2), frameRad); // 渐变图画圆
+		frameRad = frameRad + 12; //渐变圆速率
 		dProcessTime = (static_cast<double>(getTickCount()) - dProcessTime) / getTickFrequency();
 
-		imshow("photo", frame);
-		imshow("photonew", framenew);
+		imshow("photo", Frame);
+		imshow("photonew", FrameNew);
 
 		nKey = waitKey(1);
+
 		cout << dProcessTime << endl;
-		cout << "Frame Width:" << frame.cols << "\tFrame Height:" << frame.rows << endl;
+		cout << "Frame Width:" << Frame.cols << "\tFrame Height:" << Frame.rows << endl;
 
 	}
 
     return 0;
 }
 
-//--------------------------------融合函数----------------------------------
+//--------------------------------画圆函数----------------------------------
 
-void bold(const Mat &src, Mat & dst)
-{
-	 dst.create(src.size(), src.type());
-
-	for (int j = 0; j < src.rows; j++) {
-		const uchar* data1 = src.ptr<uchar>(j);
-	    uchar* data2 = dst.ptr<uchar>(j);
-		for (int i = 0; i < src.cols; i++) {
-			if (255 ==data1[i] )
-			{
-				data2[i - 1] = 255;
-				data2[i] = 255;
-				data2[i + 1] = 255;
-			}
-			else
-			{
-				data2[i] = data1[i];
-			}
-
-		}
-	}
-}
 void DrawCircle(const Mat src, const Mat background, Mat dst, Point center,int radius)
 {   
-	Mat backGround,drawbackGround;
-	backGround.create(dst.rows, dst.cols, dst.type());
-	drawbackGround.create(dst.rows, dst.cols, dst.type());
-	drawbackGround = Scalar::all(255);
-	backGround = Scalar::all(0);
-	cvtColor(backGround, backGround, CV_BGR2GRAY);
-	circle(backGround, center, radius, Scalar(255), -1, 8);
-	background.copyTo(drawbackGround, backGround);
-	drawbackGround.copyTo(dst,src);
+	Mat BackGroundWhite; //白色背景图定义
+	Mat	DrawBackGround;  //黑色背景图定义
+	BackGroundWhite.create(dst.rows, dst.cols, dst.type());  // 背景图初始化
+	DrawBackGround.create(dst.rows, dst.cols, dst.type());
+	DrawBackGround = Scalar::all(255);  //背景图全白
+	BackGroundWhite = Scalar::all(0);//背景图全黑
+	cvtColor(BackGroundWhite, BackGroundWhite, CV_BGR2GRAY); // 将背景图由3通道变为1通道
+	circle(BackGroundWhite, center, radius, Scalar(255), -1, 8);//在黑色背景图上画一个白色实心圆
+	background.copyTo(DrawBackGround, BackGroundWhite); // 将渐变图上白色实心圆区域的渐变色复制到白色背景图上
+	DrawBackGround.copyTo(dst,src);//将白色背景图上的渐变色与Canney部分结合成渐变色Canney边缘检测
 }  
+//--------------------------- 画渐变图函数----------------------
+void DrawBackGround( Mat BackGround)
+{   
+	double diag = sqrt(BackGround.cols*BackGround.cols + BackGround.rows*BackGround.rows) / 2; // 设定对角线
+	int add = diag / 255 + 1; // 设定增量
+	int radius = add; // 设定半径
+	for (int i = 0;radius<diag;)  
+	{
+		if (i != 127)
+			i++;
+		circle(BackGround, Point(BackGround.cols / 2, BackGround.rows / 2), radius, Scalar(255, i * 2, 0), add, 8);
+		radius = radius + add; // 每次循环半径增加
+	}
+}
