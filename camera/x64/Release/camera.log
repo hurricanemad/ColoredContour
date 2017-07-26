@@ -1,8 +1,12 @@
 ﻿  camera.cpp
-  正在生成代码
-  1 of 44 functions ( 2.3%) were compiled, the rest were copied from previous compilation.
+camera.cpp(113): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+camera.cpp(117): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+camera.cpp(123): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+camera.cpp(128): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+  Generating code
+  5 of 44 functions (11.4%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
     0 functions had inline decision re-evaluated but remain unchanged
-  已完成代码的生成
-  camera.vcxproj -> D:\Backup\我的文档\Visual Studio 2015\Projects\camera\x64\Release\camera.exe
-  camera.vcxproj -> D:\Backup\我的文档\Visual Studio 2015\Projects\camera\x64\Release\camera.pdb (Full PDB)
+  Finished generating code
+  camera.vcxproj -> G:\Algorithm\ColoredContour\ColoredContour\x64\Release\camera.exe
+  camera.vcxproj -> G:\Algorithm\ColoredContour\ColoredContour\x64\Release\camera.pdb (Full PDB)

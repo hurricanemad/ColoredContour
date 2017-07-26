@@ -1,3 +1,7 @@
 ﻿  camera.cpp
-  camera.vcxproj -> F:\GitHub\camera\camera\x64\Debug\camera.exe
-  camera.vcxproj -> F:\GitHub\camera\camera\x64\Debug\camera.pdb (Full PDB)
+g:\algorithm\coloredcontour\coloredcontour\camera\camera.cpp(109): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+g:\algorithm\coloredcontour\coloredcontour\camera\camera.cpp(113): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+g:\algorithm\coloredcontour\coloredcontour\camera\camera.cpp(119): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+g:\algorithm\coloredcontour\coloredcontour\camera\camera.cpp(124): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+  camera.vcxproj -> G:\Algorithm\ColoredContour\ColoredContour\x64\Debug\camera.exe
+  camera.vcxproj -> G:\Algorithm\ColoredContour\ColoredContour\x64\Debug\camera.pdb (Full PDB)

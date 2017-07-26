@@ -2,67 +2,138 @@
 //
 
 #include "stdafx.h"
-void bold(const Mat &src, Mat & dst);
-void DrawCircle(const Mat src, Mat dst, Point center, int radius, int thickness);
+void bold(const Mat &, Mat & );
+void DrawCircle(const Mat , Mat , Point , int , int );
+void RampCircle(const Mat&, Mat&, const Mat&, int);
 
 int main()
 {
-	VideoCapture capture(0);
-	int frameRad = 12;
-	//capture.set(CAP_PROP_FRAME_WIDTH, 1280);
-	//capture.set(CAP_PROP_FRAME_HEIGHT, 720);
+	VideoCapture vcCameraCapture(0);
+	int nFrameCount = 0;
+	//int nFrameRad = 12;
+	vcCameraCapture.set(CAP_PROP_FRAME_WIDTH, 1280);
+	vcCameraCapture.set(CAP_PROP_FRAME_HEIGHT, 720);
 
-	if (!capture.isOpened())
+	if (!vcCameraCapture.isOpened())
 	{   
 		cout << "No Camera Input! " << endl;
 		exit(-1);
 	}
 
-	int nKey = '\0';
+	uchar nKey = '\0';
 
 	while ('\r' != nKey)
 	{   
 		double dProcessTime = static_cast<double>(getTickCount());
 	
-		Mat frame,framegray,framemake,framenew, framemakewide;
-		Mat kernel = (Mat_<float>(3, 3) << 0, -1, 0, -1, 5, -1, 0, -1, 0);
+		Mat matSrcImage;	//Origin input image.
+		Mat matGrayImage;	//Gray image
+		Mat matBlurImage;		//Image after denoice
+		Mat matCannyImage;	//Canny image
+		Mat matSobelImage0, matSobelImage1;	//Sobel Image
+		Mat matRampImage;	//Ramp colored image
+
+		//Mat framemake, framenew, framemakewide;
+		Mat matkernel = getStructuringElement(MORPH_ELLIPSE, Size(3, 3));
+		//Mat kernel = (Mat_<float>(3, 3) << 0, -1, 0, -1, 5, -1, 0, -1, 0);
 		//int min = 100;
 		//int max = 500;
 
-		vector<vector<Point>> frameContours;
-		vector<Vec4i> frameHierarchy;
+		vcCameraCapture >> matSrcImage;
 
-        capture >> frame;
+		if (matSrcImage.empty())
+		{
+			cerr << "The capture image is empty!" <<endl;
+			exit(-1);
+		}
 		
-		cvtColor(frame, framegray, COLOR_BGR2GRAY);
-		GaussianBlur(framegray, framegray, Size(7, 7), 1.3, 1.3);
+		//vector<vector<Point>> vvptContours;
+		//vector<Vec4i> frameHierarchy;
 
-		Canny(framegray, framemake, 30,90, 3);
+		cvtColor(matSrcImage, matGrayImage, COLOR_BGR2GRAY);
+
+		GaussianBlur(matGrayImage, matBlurImage, Size(3, 3), 0.8, 0.8);
+
+		//Canny(matBlurImage, matCannyImag, 30,90, 3);
+		Sobel(matBlurImage, matSobelImage0, CV_32F, 1, 0, 3, 1.0, 0);
+		Sobel(matBlurImage, matSobelImage1, CV_32F, 0, 1, 3, 1.0, 0);
+		matCannyImage = matSobelImage0 + matSobelImage1;
+
+		matCannyImage = abs(matCannyImage) > 45.0f;
+		//morphologyEx(matCannyImage, matCannyImage, MORPH_OPEN, matkernel);
+
+		RampCircle(matSrcImage, matRampImage, matCannyImage, nFrameCount);
+
+		Mat matColorCannyImage;
+		cvtColor(matCannyImage, matColorCannyImage, CV_GRAY2RGB);
+		//matSrcImage = matSrcImage - matColorCannyImage;
+		matSrcImage = 0.9 * matSrcImage +  0.3 * matRampImage;
+		//matCannyImage.convertTo(matCannyImage, CV_8UC1);
 
 //		bold(framemake, framemakewide);
 
-		cvtColor(framemake, framemakewide, CV_GRAY2BGR);
+		//cvtColor(framemake, framemakewide, CV_GRAY2BGR);
 
-		addWeighted(frame, 1.0, framemakewide, 1.0, 0.0, framenew);
+		//addWeighted(frame, 1.0, framemakewide, 1.0, 0.0, framenew);
 
-	    filter2D(framenew, framenew, framenew.depth(), kernel);  //锐化处理
+	 //   //filter2D(framenew, framenew, framenew.depth(), kernel);  //锐化处理
 
-		if (frameRad > sqrt(framenew.cols*framenew.cols+ framenew.rows*framenew.rows)/2+4)
-			frameRad = 12;
-		DrawCircle(framemakewide, framenew, Point(framenew.cols / 2, framenew.rows / 2), frameRad, -1);
-		frameRad = frameRad + 12;
-		dProcessTime = (static_cast<double>(getTickCount()) - dProcessTime) / getTickFrequency();
+		//if (frameRad > sqrt(framenew.cols*framenew.cols+ framenew.rows*framenew.rows)/2+4)
+		//	frameRad = 12;
+		//DrawCircle(framemakewide, framenew, Point(framenew.cols / 2, framenew.rows / 2), frameRad, -1);
+		//frameRad = frameRad + 12;
+		//dProcessTime = (static_cast<double>(getTickCount()) - dProcessTime) / getTickFrequency();
 
-		imshow("photo", frame);
-		imshow("photonew", framenew);
+		imshow("photo", matCannyImage);
+		imshow("photonew", matSrcImage);
 
 		nKey = waitKey(1);
-		cout << dProcessTime << endl;
-		cout << "Frame Width:" << frame.cols << "\tFrame Height:" << frame.rows << endl;
-
+		//cout << dProcessTime << endl;
+		//cout << "Frame Width:" << frame.cols << "\tFrame Height:" << frame.rows << endl;
+		nFrameCount++;
 	}
 
     return 0;
+}
+
+void RampCircle(const Mat& matSrcMat, Mat& matRampCircleMat, const Mat& matCannyMat, int nFrameCount)
+{
+	if (matSrcMat.empty())
+	{
+		cerr << "RampCircle function input error!" <<endl;
+		exit(-1);
+	}
+
+	if (matRampCircleMat.empty())
+	{
+		matRampCircleMat = Mat::zeros(matSrcMat.rows, matSrcMat.cols, CV_8UC3);
+	}
+
+	Mat matTempMat = Mat::zeros(matSrcMat.rows, matSrcMat.cols, CV_8UC3);
+	int nFrameRadius = sqrt(matSrcMat.rows * matSrcMat.rows + matSrcMat.cols * matSrcMat.cols);
+	int nLoop = nFrameRadius / c_CircleRadius ;
+	float fStep = 255.0f / c_CircleRadius;
+
+	float fGL = static_cast<int>(nFrameCount * fStep) % 255;
+	for (int n = 0, nR = 0; n < nLoop &&  nR< nFrameRadius;  nR++)
+	{
+		double dProcessTime = static_cast<double>(getTickCount());
+		circle(matRampCircleMat, Point(matSrcMat.cols / 2, matSrcMat.rows / 2), nR, Scalar(250, 250, fGL ), 1, 1);
+		dProcessTime = static_cast<double>(getTickCount() - dProcessTime) / getTickFrequency();
+		fGL = static_cast<int>((fGL + fStep))% 255;
+
+		if (nR % c_CircleRadius == c_CircleRadius - 1)
+		{
+			n++;
+			fGL = static_cast<int>(nFrameCount * fStep) % 255;
+		}
+	}
+
+	Mat matThreshCannyMat;
+	threshold(matCannyMat, matThreshCannyMat, 100, 255, THRESH_BINARY_INV);
+	matTempMat.copyTo(matRampCircleMat, matThreshCannyMat);
+	//imshow("matRampCircleMat", matRampCircleMat);
+	int i = 0;
 }
 
 //--------------------------------融合函数----------------------------------
