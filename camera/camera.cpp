@@ -82,13 +82,14 @@ void DrawCircle(const Mat src, const Mat background, Mat dst, Point center,int r
 void DrawBackGround( Mat BackGround)
 {   
 	double diag = sqrt(BackGround.cols*BackGround.cols + BackGround.rows*BackGround.rows) / 2; // 设定对角线
-	int add = diag / 255 + 1; // 设定增量
-	int radius = add; // 设定半径
-	for (int i = 0;radius<diag;)  
+	int radius = 1;
+	for (int i = 0;radius<diag;)
 	{
-		if (i != 127)
-			i++;
-		circle(BackGround, Point(BackGround.cols / 2, BackGround.rows / 2), radius, Scalar(255, i * 2, 0), add, 8);
-		radius = radius + add; // 每次循环半径增加
+		if (i == 255)
+			i = 0;
+		i++;
+		circle(BackGround, Point(BackGround.cols / 2, BackGround.rows / 2), radius, Scalar(255, i, 0), 2, 8);
+		radius++;
 	}
+
 }
